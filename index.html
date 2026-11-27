@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SecurePass | Password Guardian</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.min.js" defer></script>
+<style>
+:root {
+  --bg:#0a1020; --panel:#141f33; --panel2:#1c2b43;
+  --text:#f1f5ff; --muted:#9baac2; --cyan:#4de0d0;
+  --blue:#70a7ff; --green:#4bd69b; --red:#ff647c;
+  --yellow:#ffd166; --border:#2b3c55;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+ margin:0;background:radial-gradient(ellipse at top,#1c3152,transparent 55%),var(--bg);
+ color:var(--text);font-family:Inter,Arial,sans-serif;line-height:1.6
+}
+header{
+ position:sticky;top:0;z-index:5;background:#0a1020ed;
+ backdrop-filter:blur(15px);border-bottom:1px solid var(--border);
+ padding:14px 6%;display:flex;justify-content:space-between;align-items:center
+}
+.brand{font-size:23px;font-weight:800;color:var(--cyan)}
+nav{display:flex;gap:20px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:13px}
+nav a:hover{color:var(--cyan)}
+main{max-width:1150px;margin:auto;padding:30px 22px}
+.hero{text-align:center;padding:55px 10px 35px}
+.hero small{color:var(--cyan);letter-spacing:3px;font-weight:bold}
+h1{font-size:clamp(32px,5vw,55px);line-height:1.12;margin:14px 0}
+.hero p{color:var(--muted);max-width:650px;margin:15px auto}
+h2{font-size:21px;margin:0}
+.sub{font-size:13px;color:var(--muted);margin:4px 0 20px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{
+ background:linear-gradient(145deg,var(--panel),#101a2c);
+ border:1px solid var(--border);border-radius:18px;padding:23px;
+ box-shadow:0 15px 35px #0002
+}
+input,select{
+ background:#091526;color:var(--text);border:1px solid #394d68;
+ border-radius:10px;padding:12px;font-size:15px;outline:none
+}
+input:focus,select:focus{border-color:var(--cyan)}
+.password-row{display:flex;gap:9px}
+.password-row input{flex:1;min-width:0}
+button{
+ background:var(--cyan);color:#07191c;border:0;padding:11px 17px;
+ border-radius:10px;font-weight:750;cursor:pointer;transition:.2s
+}
+button:hover{filter:brightness(1.12);transform:translateY(-1px)}
+button.secondary{background:var(--panel2);border:1px solid var(--border);color:var(--text)}
+button:disabled{opacity:.5;cursor:wait}
+.meter{height:12px;background:#26354c;border-radius:20px;overflow:hidden;margin:12px 0}
+.meter div{height:100%;width:0;background:var(--red);transition:.3s}
+.score-line{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+.score{font-size:24px;font-weight:800;color:var(--cyan)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}
+.stat{padding:12px;background:#0b1729;border:1px solid var(--border);border-radius:11px}
+.stat small{display:block;color:var(--muted);font-size:11px}
+.stat strong{font-size:14px;overflow-wrap:anywhere}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.check{font-size:13px;color:var(--muted)}
+.check span{color:var(--green);margin-right:7px}
+ul{color:var(--muted);padding-left:20px;font-size:13px}
+li{margin:6px 0}
+.privacy{margin-top:18px;padding:13px;background:#10302d;border:1px solid #246057;border-radius:11px;color:#b8eee0;font-size:12px}
+.section{margin-top:22px}
+.output,.result{background:#091526;border:1px solid var(--border);padding:14px;border-radius:10px;margin-top:14px;overflow-wrap:anywhere}
+.output{font-family:monospace;color:var(--cyan);font-size:16px}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.controls label{font-size:13px;color:var(--muted)}
+.quiz-question{padding:14px 0;border-bottom:1px solid var(--border)}
+.quiz-question p{font-weight:bold;margin:0 0 9px}
+.quiz-question label{display:block;color:var(--muted);font-size:13px;margin:6px 0;cursor:pointer}
+.quiz-question input{accent-color:var(--cyan)}
+footer{text-align:center;padding:30px 20px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:35px}
+@media(max-width:760px){
+ header{align-items:flex-start;gap:12px;flex-direction:column}
+ nav{gap:12px}.grid,.two{grid-template-columns:1fr}
+ .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+ <div class="brand">🔐 SecurePass</div>
+ <nav>
+  <a href="#checker">Checker</a>
+  <a href="#generator">Generator</a>
+  <a href="#breach">Breach Check</a>
+  <a href="#quiz">Quiz</a>
+ </nav>
+</header>
+
+<main>
+<section class="hero">
+ <small>ADVANCED PASSWORD SECURITY</small>
+ <h1>Protect Your Digital <span style="color:var(--cyan)">Identity.</span></h1>
+ <p>Analyze passwords, identify security weaknesses, generate stronger credentials and check known password breaches.</p>
+</section>
+
+<section class="grid" id="checker">
+ <div class="card">
+  <h2>Password Strength Analyzer</h2>
+  <p class="sub">Enter a test password to analyze its security.</p>
+  <div class="password-row">
+   <input id="password" type="password" placeholder="Enter your password" autocomplete="off">
+   <button class="secondary" id="show">Show</button>
+  </div>
+  <div class="score-line">
+   <strong id="strength">Not Tested</strong>
+   <span class="score" id="score">0/100</span>
+  </div>
+  <div class="meter"><div id="fill"></div></div>
+  <div class="stats">
+   <div class="stat"><small>Crack-time estimate</small><strong id="crack">—</strong></div>
+   <div class="stat"><small>Length</small><strong id="length">0</strong></div>
+   <div class="stat"><small>Character types</small><strong id="variety">0/4</strong></div>
+  </div>
+  <h3 style="font-size:15px">Security checklist</h3>
+  <div class="checks" id="checks"></div>
+  <h3 style="font-size:15px;margin-top:22px">Improvement suggestions</h3>
+  <ul id="tips"><li>Enter a password to begin.</li></ul>
+  <div class="privacy">🔒 <b>Privacy:</b> Strength analysis happens locally in your browser. Your password is not saved or uploaded.</div>
+ </div>
+
+ <div class="card">
+  <h2>Your Security Dashboard</h2>
+  <p class="sub">Essential practices for safer online accounts.</p>
+  <div style="font-size:65px;text-align:center;margin:20px">🛡️</div>
+  <h3>Use unique passwords</h3>
+  <p class="sub">Use a different password for every important account.</p>
+  <hr style="border-color:var(--border)">
+  <h3>Enable two-factor authentication</h3>
+  <p class="sub">Add an extra layer of protection using an authenticator app or passkey.</p>
+  <hr style="border-color:var(--border)">
+  <h3>Use a password manager</h3>
+  <p class="sub">Generate and securely manage strong, unique passwords.</p>
+ </div>
+</section>
+
+<section class="two section">
+ <div class="card" id="generator">
+  <h2>⚡ Password Generator</h2>
+  <p class="sub">Create a random password with your preferred settings.</p>
+  <div class="controls">
+   <label>Length <input type="number" id="size" min="8" max="64" value="20" style="width:75px"></label>
+   <label><input type="checkbox" id="upper" checked> Uppercase</label>
+   <label><input type="checkbox" id="lower" checked> Lowercase</label>
+   <label><input type="checkbox" id="numbers" checked> Numbers</label>
+   <label><input type="checkbox" id="symbols" checked> Symbols</label>
+  </div>
+  <button id="make">Generate Password</button>
+  <div class="output" id="generated">Your password will appear here.</div>
+  <button class="secondary" id="copyGenerated" style="margin-top:10px">Copy Password</button>
+  <hr style="border-color:var(--border);margin:22px 0">
+  <h3>Memorable Passphrase</h3>
+  <div class="controls">
+   <label>Words <select id="wordCount"><option>4</option><option selected>5</option><option>6</option><option>7</option></select></label>
+   <label><input type="checkbox" id="phraseNumber" checked> Add number</label>
+  </div>
+  <button id="makePhrase">Generate Passphrase</button>
+  <div class="output" id="phrase">Your passphrase will appear here.</div>
+  <button class="secondary" id="copyPhrase" style="margin-top:10px">Copy Passphrase</button>
+ </div>
+
+ <div class="card" id="breach">
+  <h2>🔍 Data Breach Checker</h2>
+  <p class="sub">Check whether a password appears in the Pwned Passwords dataset.</p>
+  <div style="font-size:60px;text-align:center;margin:25px">🔐</div>
+  <button id="breachBtn" style="width:100%">Check Entered Password</button>
+  <div class="result" id="breachResult" aria-live="polite">Your complete password and complete hash are never sent to the breach service.</div>
+  <p class="sub" style="margin-top:15px">Uses the Have I Been Pwned range API with k-anonymity. An internet connection is required.</p>
+ </div>
+</section>
+
+<section class="section card" id="quiz">
+ <h2>🧠 Password Security Quiz</h2>
+ <p class="sub">Test your knowledge of online account security.</p>
+ <form id="quizForm">
+  <div class="quiz-question">
+   <p>1. Which is the safest password practice?</p>
+   <label><input type="radio" name="q1" value="a"> Reuse one password everywhere</label>
+   <label><input type="radio" name="q1" value="b"> Use a unique password for every account</label>
+   <label><input type="radio" name="q1" value="c"> Use your birthday</label>
+  </div>
+  <div class="quiz-question">
+   <p>2. What does MFA provide?</p>
+   <label><input type="radio" name="q2" value="a"> An additional identity verification step</label>
+   <label><input type="radio" name="q2" value="b"> Free internet access</label>
+   <label><input type="radio" name="q2" value="c"> Automatic password sharing</label>
+  </div>
+  <div class="quiz-question">
+   <p>3. What should you do if your password appears in a breach?</p>
+   <label><input type="radio" name="q3" value="a"> Ignore it</label>
+   <label><input type="radio" name="q3" value="b"> Share it online</label>
+   <label><input type="radio" name="q3" value="c"> Change it wherever it was used</label>
+  </div>
+  <div class="quiz-question">
+   <p>4. Which password is generally safer?</p>
+   <label><input type="radio" name="q4" value="a"> 12345678</label>
+   <label><input type="radio" name="q4" value="b"> A long, randomly generated unique passphrase</label>
+   <label><input type="radio" name="q4" value="c"> Your name and birth year</label>
+  </div>
+  <button type="submit" style="margin-top:18px">Submit Quiz</button>
+  <div class="result" id="quizResult" aria-live="polite"></div>
+ </form>
+</section>
+</main>
+
+<footer>
+ SecurePass © 2026 | Password Security Awareness Project<br>
+ Educational estimates only. Never test a password currently protecting a sensitive account on an untrusted website.
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const password = $('password');
+
+function escapeHTML(s) {
+ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function timeText(seconds) {
+ if(!Number.isFinite(seconds) || seconds > 3.15e15) return 'Centuries+';
+ if(seconds < 1) return 'Less than a second';
+ const units=[['years',31557600],['days',86400],['hours',3600],['minutes',60],['seconds',1]];
+ for(const [name,size] of units) if(seconds>=size) return Math.floor(seconds/size).toLocaleString()+' '+name;
+ return 'Less than a second';
+}
+
+function analyze() {
+ const p=password.value;
+ if(!p) {
+  $('strength').textContent='Not Tested';$('score').textContent='0/100';
+  $('fill').style.width='0%';$('crack').textContent='—';
+  $('length').textContent='0';$('variety').textContent='0/4';
+  $('checks').innerHTML='';$('tips').innerHTML='<li>Enter a password to begin.</li>';
+  return;
+ }
+ const types=[
+  /[a-z]/.test(p),/[A-Z]/.test(p),/[0-9]/.test(p),/[^A-Za-z0-9]/.test(p)
+ ];
+ const common=/password|qwerty|123456|letmein|admin|welcome|iloveyou/i.test(p);
+ const pattern=/1234|2345|3456|abcd|qwerty|asdf|(.)\1{2,}/i.test(p);
+ const z=typeof window.zxcvbn==='function'?window.zxcvbn(p):null;
+ let raw=z?z.score:Math.min(4,Math.floor(p.length/5)+Math.floor(types.filter(Boolean).length/2));
+ if(p.length<8)raw=Math.min(raw,1);
+ if(common||pattern)raw=Math.max(0,raw-1);
+ if(p.length>=16&&!common&&!pattern)raw=Math.max(3,raw);
+ const score=Math.round(raw*25);
+ const labels=['Very Weak','Weak','Fair','Strong','Very Strong'];
+ const colors=['#ff647c','#ff916b','#ffd166','#70a7ff','#4bd69b'];
+ $('strength').textContent=labels[raw];
+ $('score').textContent=score+'/100';
+ $('fill').style.width=score+'%';$('fill').style.background=colors[raw];
+ $('length').textContent=p.length+' characters';
+ $('variety').textContent=types.filter(Boolean).length+'/4';
+ const guesses=z?z.guesses:Math.pow(Math.max(1,types.filter(Boolean).length*25),p.length);
+ $('crack').textContent=timeText(guesses/1e10);
+ const checks=[
+  [p.length>=12,'At least 12 characters'],
+  [types[0]&&types[1],'Uppercase and lowercase'],
+  [types[2],'Contains numbers'],
+  [types[3],'Contains symbols'],
+  [!common,'No common password words'],
+  [!pattern,'No obvious sequences or repetition']
+ ];
+ $('checks').innerHTML=checks.map(([ok,label])=>`<div class="check"><span>${ok?'✓':'○'}</span>${label}</div>`).join('');
+ const tips=[];
+ if(p.length<16)tips.push('Increase the length to 16 or more characters.');
+ if(!types[0]||!types[1])tips.push('Use a mix of uppercase and lowercase letters.');
+ if(!types[2])tips.push('Consider adding numbers.');
+ if(!types[3])tips.push('Consider adding symbols where accepted.');
+ if(common)tips.push('Avoid common passwords and dictionary words.');
+ if(pattern)tips.push('Avoid keyboard patterns, sequences and repeated characters.');
+ if(z&&z.feedback&&z.feedback.suggestions)tips.push(...z.feedback.suggestions);
+ if(!tips.length)tips.push('Good result. Keep this password unique to one account.');
+ $('tips').innerHTML=[...new Set(tips)].map(t=>'<li>'+escapeHTML(t)+'</li>').join('');
+}
+password.addEventListener('input',analyze);
+$('show').onclick=()=>{
+ password.type=password.type==='password'?'text':'password';
+ $('show').textContent=password.type==='password'?'Show':'Hide';
+};
+
+// Cryptographically secure random selection without modulo bias.
+function randomIndex(max) {
+ const range=0x100000000, limit=range-(range%max);
+ const a=new Uint32Array(1);
+ do{crypto.getRandomValues(a)}while(a[0]>=limit);
+ return a[0]%max;
+}
+function secureShuffle(items) {
+ for(let i=items.length-1;i>0;i--){
+  const j=randomIndex(i+1);[items[i],items[j]]=[items[j],items[i]];
+ }
+ return items;
+}
+$('make').onclick=()=>{
+ const size=Math.max(8,Math.min(64,Number($('size').value)||20));
+ const sets=[];
+ if($('upper').checked)sets.push('ABCDEFGHJKLMNPQRSTUVWXYZ');
+ if($('lower').checked)sets.push('abcdefghijkmnopqrstuvwxyz');
+ if($('numbers').checked)sets.push('23456789');
+ if($('symbols').checked)sets.push('!@#$%^&*()-_=+?');
+ if(!sets.length){alert('Select at least one character type.');return;}
+ const all=sets.join('');
+ const result=sets.map(s=>s[randomIndex(s.length)]);
+ while(result.length<size)result.push(all[randomIndex(all.length)]);
+ $('generated').textContent=secureShuffle(result).join('');
+};
+const words=['amber','anchor','apple','atlas','bamboo','beacon','berry','birch','blossom','breeze','cactus','candle','canyon','cedar','cherry','cobalt','comet','coral','crystal','daisy','delta','dolphin','dream','eagle','echo','ember','falcon','fern','flame','forest','galaxy','garden','ginger','glacier','harbor','hazel','honey','indigo','island','jasmine','jungle','lagoon','lantern','lemon','lilac','lotus','maple','marble','meadow','meteor','mint','monsoon','mountain','nectar','ocean','olive','orchid','otter','panda','pebble','phoenix','piano','planet','quartz','rabbit','rainbow','raven','river','rocket','saffron','saturn','shadow','silver','solar','sparrow','spruce','star','summit','tiger','timber','tulip','velvet','violet','willow','winter','zephyr'];
+$('makePhrase').onclick=()=>{
+ const count=Number($('wordCount').value);
+ let phrase=Array.from({length:count},()=>words[randomIndex(words.length)]).join('-');
+ if($('phraseNumber').checked)phrase+='-'+(1000+randomIndex(9000));
+ $('phrase').textContent=phrase;
+};
+async function copyText(text,button) {
+ try{await navigator.clipboard.writeText(text);button.textContent='Copied!';setTimeout(()=>button.textContent='Copy',1300);}
+ catch{alert('Clipboard access unavailable. Select and copy the text manually.');}
+}
+$('copyGenerated').onclick=()=>copyText($('generated').textContent,$('copyGenerated'));
+$('copyPhrase').onclick=()=>copyText($('phrase').textContent,$('copyPhrase'));
+
+// HIBP k-anonymity: only the first five SHA-1 hex characters leave the browser.
+async function sha1(value) {
+ const bytes=new TextEncoder().encode(value);
+ const digest=await crypto.subtle.digest('SHA-1',bytes);
+ return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+$('breachBtn').onclick=async()=>{
+ const p=password.value;
+ if(!p){$('breachResult').textContent='Enter a test password first.';return;}
+ if(!crypto.subtle){$('breachResult').textContent='Web Crypto is unavailable. Use HTTPS or localhost.';return;}
+ const btn=$('breachBtn');btn.disabled=true;btn.textContent='Checking...';
+ $('breachResult').textContent='Checking anonymous hash range...';
+ try{
+  const hash=await sha1(p),prefix=hash.slice(0,5),suffix=hash.slice(5);
+  const res=await fetch('https://api.pwnedpasswords.com/range/'+prefix,{
+   headers:{'Add-Padding':'true'}
+  });
+  if(!res.ok)throw new Error('Service error: '+res.status);
+  const lines=(await res.text()).split(/\r?\n/);
+  const found=lines.map(x=>x.trim().split(':')).find(x=>x[0]===suffix);
+  if(found&&Number(found[1])>0){
+   $('breachResult').innerHTML='<b style="color:var(--red)">⚠ Found in known breaches</b><br>Exposure count: '+Number(found[1]).toLocaleString()+'. Change this password anywhere it is used.';
+  }else{
+   $('breachResult').innerHTML='<b style="color:var(--green)">✓ No match found</b><br>Not found in the checked dataset. This is not a guarantee of safety.';
+  }
+ }catch(e){$('breachResult').textContent='Could not check: '+e.message+'. Check your connection and retry.';}
+ finally{btn.disabled=false;btn.textContent='Check Entered Password';}
+};
+
+$('quizForm').onsubmit=e=>{
+ e.preventDefault();
+ const answers={q1:'b',q2:'a',q3:'c',q4:'b'};
+ let score=0;
+ for(const [q,a] of Object.entries(answers)){
+  if(document.querySelector(`input[name="${q}"]:checked`)?.value===a)score++;
+ }
+ $('quizResult').textContent='Your score: '+score+'/4. '+(score===4?'Excellent security knowledge!':'Review the correct security practices and try again.');
+};
+analyze();
+</script>    
+</body>
+</html>
